@@ -36,6 +36,10 @@ def adicionar_aluno(aluno: Aluno):
         if a["id_aluno"] == aluno.id_aluno:
             raise HTTPException(status_code=400, detail="ID de aluno já existente")
 
+    # arredonda as notas para terem no máximo 1 casa decimal
+    for materia in aluno.notas.keys():
+        aluno.notas[materia] = round(aluno.notas[materia],1)
+
     # Validação das notas
     for nota in aluno.notas.values():
         if not 0 <= nota <= 10:
