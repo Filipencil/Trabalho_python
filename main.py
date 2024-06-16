@@ -36,27 +36,32 @@ def adicionar_aluno(aluno: Aluno):
         if a["id_aluno"] == aluno.id_aluno:
             raise HTTPException(status_code=400, detail="ID de aluno já existente")
 
-    # arredonda as notas para terem no máximo 1 casa decimal
-    for materia in aluno.notas.keys():
-        aluno.notas[materia] = round(aluno.notas[materia],1)
-
     # Validação das notas
     for nota in aluno.notas.values():
         if not 0 <= nota <= 10:
             raise HTTPException(status_code=400, detail="As notas devem estar entre 0 e 10")
     
+    # Arredonda as notas para terem no maximo 1 casa decimal
+    for materia in aluno.notas.keys():
+        aluno.notas[materia] = round(aluno.notas[materia],1)
+    
     bd.append(aluno.model_dump())
     salvar_bd(bd)
     return aluno
 
+# Esse get vai verificar todas as matérias e alunos de um determinado aluno pelo ID dele
 @app.get('/notas/{id_aluno}')
 def notas_aluno(id_aluno: int):
     bd = carregar_bd()
     for aluno in bd:
         if aluno["id_aluno"] == id_aluno:
-            return aluno["notas"]
+            return {
+                "nome_aluno": aluno["nome_aluno"],
+                "notas": aluno["notas"]
+            }
     raise HTTPException(status_code=404, detail="Aluno não encontrado")
 
+# Esse get vai verificar todas as notas e alunos de uma determinada matéria pelo nome da matéria
 @app.get('/disciplina/{disciplina}')
 def notas_disciplina(disciplina: str):
     bd = carregar_bd()
@@ -72,6 +77,7 @@ def notas_disciplina(disciplina: str):
     
     raise HTTPException(status_code=404, detail="Disciplina não encontrada")
 
+# Esse get vai verificar estátisticas (moda, média e mediana) de uma determinada matéria pelo nome da matéria
 @app.get('/estatisticas/{disciplina}')
 def estatisticas_disciplina(disciplina: str):
     bd = carregar_bd()
@@ -90,7 +96,7 @@ def estatisticas_disciplina(disciplina: str):
         }
     raise HTTPException(status_code=404, detail="Disciplina não encontrada")
 
-@app.get('/desempenho_baixo/')
+# Esse get vai verificar os alunos que possuem uma nota inferior a 6.0 em uma ou mais matérias
 def desempenho_baixo():
     nota_minima = 6.0
     bd = carregar_bd()
@@ -108,7 +114,7 @@ def desempenho_baixo():
         return alunos_desempenho_baixo
     raise HTTPException(status_code=404, detail="Nenhum aluno com desempenho abaixo da nota mínima")
 
-
+# Esse 'get' vai verificar os alunos que não possuem notas, vai deletar esse aluno da lista de alunos
 @app.delete('/remover_alunos_sem_notas')
 def remover_alunos_sem_notas():
     bd = carregar_bd()
